@@ -1,4 +1,4 @@
-#  Aerial Guardian — Drone Detection & Tracking
+#  Aerial Guardian - Drone Detection & Tracking
 
 A lightweight, CPU-only pipeline for detecting and tracking **people and vehicles** in drone footage using **YOLO11n + SAHI + ByteTrack**. Model size is ~5.4 MB, which is under the 300 MB limit.
 
@@ -28,7 +28,7 @@ This pipeline solves both problems.
 
 **Small object problem:** At drone altitude, people and vehicles are too tiny for standard full-frame inference to detect reliably.
 
-**Solution — SAHI:** The frame is sliced into overlapping **512×512 patches** (20% overlap) and YOLO runs on each patch independently. A 15-pixel person is seen at full resolution inside its local patch. Detections are merged across patches using **Non-Maximum Merging (NMM)**.
+**Solution - SAHI:** The frame is sliced into overlapping **512×512 patches** (20% overlap) and YOLO runs on each patch independently. A 15-pixel person is seen at full resolution inside its local patch. Detections are merged across patches using **Non-Maximum Merging (NMM)**.
 
 ```
 Full frame → Slice into 512×512 patches → YOLO11n on each → NMM merge → ByteTrack
@@ -38,14 +38,14 @@ Trade-off: ~8 YOLO inferences per frame instead of 1. Slower, but dramatically b
 
 ---
 
-### 2. ID Switching — Ego-Motion & Occlusions
+### 2. ID Switching - Ego-Motion & Occlusions
 
 **Ego-motion:** When the drone pans, all objects shift position — even stationary ones. This breaks IoU-based tracking and causes ID switches.
 
 **Fix — `EgoMotionCompensator`:**
 1. Extract background feature points from the previous frame (`cv2.goodFeaturesToTrack`)
 2. Track them into the current frame using Lucas-Kanade optical flow
-3. Compute **median translation** (dx, dy) — median ignores moving-object outliers
+3. Compute **median translation** (dx, dy) - median ignores moving-object outliers
 4. Shift all detections by (−dx, −dy) before passing to ByteTrack
 
 This cancels out the drone's movement so the tracker sees a stable world.
@@ -54,12 +54,12 @@ This cancels out the drone's movement so the tracker sees a stable world.
 
 ---
 
-### 3. Edge Hardware — NVIDIA Jetson
+### 3. Edge Hardware - NVIDIA Jetson
 
 | Step | Action |
 |---|---|
 | TensorRT export | `yolo export model=yolo11n.pt format=engine device=0` |
-| INT8 quantization | Add `int8=True` to above command — doubles throughput |
+| INT8 quantization | Add `int8=True` to above command - doubles throughput |
 | Smaller patches | Reduce slice size to 320×320 in `pipeline.py` |
 | Skip SAHI | At lower altitudes where objects are larger, bypass SAHI entirely for 30+ FPS |
 
